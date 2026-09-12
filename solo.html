@@ -1,0 +1,2159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar System V8.1</title>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        font-family: Arial, sans-serif;
+    }
+
+    #title {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        font-size: 23px;
+        font-weight: bold;
+        z-index: 20;
+        text-shadow:
+            0 0 8px white,
+            0 0 20px #777;
+        pointer-events: none;
+    }
+
+    #objectName {
+        position: fixed;
+        display: none;
+        color: white;
+        background: rgba(0,0,0,0.88);
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        z-index: 30;
+        pointer-events: none;
+        box-shadow: 0 0 12px rgba(255,255,255,0.4);
+    }
+
+    #info {
+        position: fixed;
+        bottom: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #aaa;
+        font-size: 12px;
+        z-index: 20;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+</style>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+}
+</script>
+</head>
+
+<body>
+
+<div id="title">☀️ SOLAR SYSTEM V8.1</div>
+
+<div id="objectName"></div>
+
+<div id="info">
+    🖱️ Drag = rotate &nbsp; | &nbsp;
+    Wheel = zoom toward object
+</div>
+
+
+<script type="module">
+
+import * as THREE from "three";
+
+import {
+    OrbitControls
+} from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+
+
+// ============================================================
+// SCENE
+// ============================================================
+
+const scene = new THREE.Scene();
+
+
+// ============================================================
+// CAMERA
+// ============================================================
+
+const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.03,
+    3000
+);
+
+camera.position.set(
+    0,
+    58,
+    125
+);
+
+
+// ============================================================
+// RENDERER
+// ============================================================
+
+const renderer = new THREE.WebGLRenderer({
+    antialias: true
+});
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
+
+renderer.outputColorSpace =
+    THREE.SRGBColorSpace;
+
+renderer.toneMapping =
+    THREE.ACESFilmicToneMapping;
+
+renderer.toneMappingExposure = 1.25;
+
+document.body.appendChild(
+    renderer.domElement
+);
+
+
+// ============================================================
+// CAMERA CONTROLS
+// ============================================================
+
+const controls = new OrbitControls(
+    camera,
+    renderer.domElement
+);
+
+controls.enableDamping = true;
+controls.dampingFactor = 0.045;
+
+controls.minDistance = 3;
+controls.maxDistance = 350;
+
+controls.zoomSpeed = 0.8;
+
+
+// ============================================================
+// LIGHT
+// ============================================================
+
+const ambientLight =
+    new THREE.AmbientLight(
+        0xffffff,
+        0.20
+    );
+
+scene.add(
+    ambientLight
+);
+
+
+// ============================================================
+// SUN
+// ============================================================
+
+const sunGeometry =
+    new THREE.SphereGeometry(
+        7,
+        64,
+        64
+    );
+
+const sunMaterial =
+    new THREE.MeshBasicMaterial({
+        color: 0xffd42a
+    });
+
+const sun =
+    new THREE.Mesh(
+        sunGeometry,
+        sunMaterial
+    );
+
+scene.add(
+    sun
+);
+
+
+// ============================================================
+// SUN LIGHT
+// ============================================================
+
+const sunLight =
+    new THREE.PointLight(
+        0xffffff,
+        5.5,
+        600
+    );
+
+sunLight.position.set(
+    0,
+    0,
+    0
+);
+
+scene.add(
+    sunLight
+);
+
+
+// ============================================================
+// SUN GLOW
+// ============================================================
+
+const glowGeometry =
+    new THREE.SphereGeometry(
+        9,
+        64,
+        64
+    );
+
+const glowMaterial =
+    new THREE.MeshBasicMaterial({
+
+        color: 0xff7200,
+
+        transparent: true,
+
+        opacity: 0.18,
+
+        side: THREE.BackSide
+    });
+
+const glow =
+    new THREE.Mesh(
+        glowGeometry,
+        glowMaterial
+    );
+
+scene.add(
+    glow
+);
+
+
+// ============================================================
+// STARS
+// ============================================================
+
+const starGeometry =
+    new THREE.BufferGeometry();
+
+const starPositions = [];
+
+const starCount = 10000;
+
+for (
+    let i = 0;
+    i < starCount;
+    i++
+) {
+
+    const radius =
+        450 + Math.random() * 650;
+
+    const theta =
+        Math.random() * Math.PI * 2;
+
+    const phi =
+        Math.acos(
+            2 * Math.random() - 1
+        );
+
+    const x =
+        radius *
+        Math.sin(phi) *
+        Math.cos(theta);
+
+    const y =
+        radius *
+        Math.sin(phi) *
+        Math.sin(theta);
+
+    const z =
+        radius *
+        Math.cos(phi);
+
+    starPositions.push(
+        x,
+        y,
+        z
+    );
+}
+
+starGeometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+        starPositions,
+        3
+    )
+);
+
+const starMaterial =
+    new THREE.PointsMaterial({
+
+        color: 0xffffff,
+
+        size: 0.45
+    });
+
+const stars =
+    new THREE.Points(
+        starGeometry,
+        starMaterial
+    );
+
+scene.add(
+    stars
+);
+
+
+// ============================================================
+// CANVAS TEXTURE HELPER
+// ============================================================
+
+function createCanvas() {
+
+    const canvas =
+        document.createElement("canvas");
+
+    canvas.width = 1024;
+    canvas.height = 512;
+
+    const ctx =
+        canvas.getContext("2d");
+
+    return {
+        canvas,
+        ctx
+    };
+}
+
+
+// ============================================================
+// EARTH TEXTURE
+// ============================================================
+
+function createEarthTexture() {
+
+    const {
+        canvas,
+        ctx
+    } = createCanvas();
+
+
+    // OCEAN
+
+    ctx.fillStyle =
+        "#126fd0";
+
+    ctx.fillRect(
+        0,
+        0,
+        1024,
+        512
+    );
+
+
+    // LAND
+
+    for (
+        let i = 0;
+        i < 65;
+        i++
+    ) {
+
+        const x =
+            Math.random() * 1024;
+
+        const y =
+            Math.random() * 512;
+
+        const w =
+            18 + Math.random() * 115;
+
+        const h =
+            12 + Math.random() * 65;
+
+        ctx.fillStyle =
+            i % 3 === 0
+            ? "#78a945"
+            : "#299347";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            x,
+            y,
+            w,
+            h,
+            Math.random() * Math.PI,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    // CLOUDS
+
+    for (
+        let i = 0;
+        i < 110;
+        i++
+    ) {
+
+        const x =
+            Math.random() * 1024;
+
+        const y =
+            Math.random() * 512;
+
+        const w =
+            10 + Math.random() * 55;
+
+        const h =
+            3 + Math.random() * 12;
+
+        ctx.fillStyle =
+            "rgba(255,255,255,0.72)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            x,
+            y,
+            w,
+            h,
+            Math.random() * Math.PI,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    return new THREE.CanvasTexture(
+        canvas
+    );
+}
+
+
+// ============================================================
+// VENUS TEXTURE
+// ============================================================
+
+function createVenusTexture() {
+
+    const {
+        canvas,
+        ctx
+    } = createCanvas();
+
+    ctx.fillStyle =
+        "#d6a65a";
+
+    ctx.fillRect(
+        0,
+        0,
+        1024,
+        512
+    );
+
+
+    for (
+        let i = 0;
+        i < 100;
+        i++
+    ) {
+
+        const x =
+            Math.random() * 1024;
+
+        const y =
+            Math.random() * 512;
+
+        ctx.strokeStyle =
+            "rgba(255,225,170,0.55)";
+
+        ctx.lineWidth =
+            3 + Math.random() * 8;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x,
+            y
+        );
+
+        ctx.lineTo(
+            x + 80 +
+            Math.random() * 180,
+            y + Math.random() * 25
+        );
+
+        ctx.stroke();
+    }
+
+
+    return new THREE.CanvasTexture(
+        canvas
+    );
+}
+
+
+// ============================================================
+// MARS TEXTURE
+// ============================================================
+
+function createMarsTexture() {
+
+    const {
+        canvas,
+        ctx
+    } = createCanvas();
+
+    ctx.fillStyle =
+        "#a84732";
+
+    ctx.fillRect(
+        0,
+        0,
+        1024,
+        512
+    );
+
+
+    for (
+        let i = 0;
+        i < 160;
+        i++
+    ) {
+
+        const x =
+            Math.random() * 1024;
+
+        const y =
+            Math.random() * 512;
+
+        const r =
+            4 + Math.random() * 30;
+
+        ctx.fillStyle =
+            Math.random() > 0.5
+            ? "#702c24"
+            : "#c96a41";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            r,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    return new THREE.CanvasTexture(
+        canvas
+    );
+}
+
+
+// ============================================================
+// JUPITER TEXTURE
+// ============================================================
+
+function createJupiterTexture() {
+
+    const {
+        canvas,
+        ctx
+    } = createCanvas();
+
+    const bands = [
+
+        "#e3c39d",
+        "#a97855",
+        "#d9b58c",
+        "#986b4d",
+        "#ead0aa",
+        "#b6815d",
+        "#d8ad83"
+
+    ];
+
+
+    for (
+        let i = 0;
+        i < 18;
+        i++
+    ) {
+
+        ctx.fillStyle =
+            bands[
+                i % bands.length
+            ];
+
+        ctx.fillRect(
+            0,
+            i * 29,
+            1024,
+            29
+        );
+    }
+
+
+    // CLOUD STREAKS
+
+    for (
+        let i = 0;
+        i < 45;
+        i++
+    ) {
+
+        const x =
+            Math.random() * 1024;
+
+        const y =
+            Math.random() * 512;
+
+        ctx.fillStyle =
+            "rgba(100,60,40,0.30)";
+
+        ctx.beginPath();
+
+        ctx.ellipse(
+            x,
+            y,
+            15 + Math.random() * 40,
+            4 + Math.random() * 10,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    // GREAT RED SPOT
+
+    ctx.fillStyle =
+        "#a84b36";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        700,
+        350,
+        65,
+        30,
+        0,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    return new THREE.CanvasTexture(
+        canvas
+    );
+}
+
+
+// ============================================================
+// SATURN TEXTURE
+// ============================================================
+
+function createSaturnTexture() {
+
+    const {
+        canvas,
+        ctx
+    } = createCanvas();
+
+    const colors = [
+
+        "#ead5a5",
+        "#cbb07d",
+        "#f0dfb7",
+        "#b99b69",
+        "#e4c993"
+
+    ];
+
+
+    for (
+        let i = 0;
+        i < 18;
+        i++
+    ) {
+
+        ctx.fillStyle =
+            colors[
+                i % colors.length
+            ];
+
+        ctx.fillRect(
+            0,
+            i * 29,
+            1024,
+            29
+        );
+    }
+
+
+    return new THREE.CanvasTexture(
+        canvas
+    );
+}
+
+
+// ============================================================
+// EARTH DAY/NIGHT SHADER
+// ============================================================
+
+const earthTexture =
+    createEarthTexture();
+
+const earthUniforms = {
+
+    map: {
+        value: earthTexture
+    },
+
+    lightPosition: {
+        value:
+            new THREE.Vector3(
+                0,
+                0,
+                0
+            )
+    }
+};
+
+
+const earthVertexShader = `
+
+    varying vec2 vUv;
+    varying vec3 vWorldNormal;
+    varying vec3 vWorldPosition;
+
+    void main() {
+
+        vUv = uv;
+
+        vec4 worldPosition =
+            modelMatrix *
+            vec4(position, 1.0);
+
+        vWorldPosition =
+            worldPosition.xyz;
+
+        vWorldNormal =
+            normalize(
+                mat3(modelMatrix) *
+                normal
+            );
+
+        gl_Position =
+            projectionMatrix *
+            viewMatrix *
+            worldPosition;
+    }
+
+`;
+
+
+const earthFragmentShader = `
+
+    uniform sampler2D map;
+    uniform vec3 lightPosition;
+
+    varying vec2 vUv;
+    varying vec3 vWorldNormal;
+    varying vec3 vWorldPosition;
+
+    void main() {
+
+        vec4 tex =
+            texture2D(
+                map,
+                vUv
+            );
+
+        vec3 lightDirection =
+            normalize(
+                lightPosition -
+                vWorldPosition
+            );
+
+        float brightness =
+            dot(
+                normalize(vWorldNormal),
+                lightDirection
+            );
+
+        float day =
+            smoothstep(
+                -0.08,
+                0.18,
+                brightness
+            );
+
+        vec3 dayColor =
+            tex.rgb *
+            (0.38 + day * 1.25);
+
+        vec3 nightColor =
+            tex.rgb *
+            0.025;
+
+        vec3 finalColor =
+            mix(
+                nightColor,
+                dayColor,
+                day
+            );
+
+        gl_FragColor =
+            vec4(
+                finalColor,
+                1.0
+            );
+    }
+
+`;
+
+
+// ============================================================
+// PLANET DATA
+// ============================================================
+
+const planetData = [
+
+    {
+        name: "Mercury",
+        distance: 12,
+        size: 0.75,
+        color: 0x9b9b9b,
+        eccentricity: 0.18,
+        orbitSpeed: 0.0030,
+        rotationSpeed: 0.004,
+        tilt: 0.03
+    },
+
+    {
+        name: "Venus",
+        distance: 18,
+        size: 1.15,
+        texture: createVenusTexture(),
+        eccentricity: 0.08,
+        orbitSpeed: 0.0022,
+        rotationSpeed: 0.002,
+        tilt: 0.06
+    },
+
+    {
+        name: "Earth",
+        distance: 25,
+        size: 1.35,
+        earth: true,
+        eccentricity: 0.0167,
+        orbitSpeed: 0.0018,
+        rotationSpeed: 0.006,
+        tilt:
+            THREE.MathUtils.degToRad(
+                23.4
+            )
+    },
+
+    {
+        name: "Mars",
+        distance: 32,
+        size: 1.05,
+        texture: createMarsTexture(),
+        eccentricity: 0.09,
+        orbitSpeed: 0.0015,
+        rotationSpeed: 0.005,
+        tilt:
+            THREE.MathUtils.degToRad(
+                25
+            )
+    },
+
+    {
+        name: "Jupiter",
+        distance: 45,
+        size: 3.4,
+        texture: createJupiterTexture(),
+        eccentricity: 0.05,
+        orbitSpeed: 0.0010,
+        rotationSpeed: 0.008,
+        tilt:
+            THREE.MathUtils.degToRad(
+                3
+            )
+    },
+
+    {
+        name: "Saturn",
+        distance: 60,
+        size: 3.0,
+        texture: createSaturnTexture(),
+        eccentricity: 0.056,
+        orbitSpeed: 0.00075,
+        rotationSpeed: 0.007,
+        tilt:
+            THREE.MathUtils.degToRad(
+                26.7
+            )
+    },
+
+    {
+        name: "Uranus",
+        distance: 75,
+        size: 2.0,
+        color: 0x62d4dd,
+        eccentricity: 0.047,
+        orbitSpeed: 0.0005,
+        rotationSpeed: 0.004,
+        tilt:
+            THREE.MathUtils.degToRad(
+                97.8
+            )
+    },
+
+    {
+        name: "Neptune",
+        distance: 90,
+        size: 2.0,
+        color: 0x4169e1,
+        eccentricity: 0.009,
+        orbitSpeed: 0.0004,
+        rotationSpeed: 0.004,
+        tilt:
+            THREE.MathUtils.degToRad(
+                28.3
+            )
+    }
+
+];
+
+
+// ============================================================
+// PLANETS
+// ============================================================
+
+const planets = [];
+
+
+// ============================================================
+// CREATE PLANETS
+// ============================================================
+
+planetData.forEach(
+    data => {
+
+        // IMPORTANT:
+        // This group ONLY controls the orbit.
+        // It has NO rotation.
+        // Therefore orbit lines stay clean.
+
+        const orbitGroup =
+            new THREE.Group();
+
+        scene.add(
+            orbitGroup
+        );
+
+
+        let material;
+
+
+        if (data.earth) {
+
+            material =
+                new THREE.ShaderMaterial({
+
+                    uniforms:
+                        earthUniforms,
+
+                    vertexShader:
+                        earthVertexShader,
+
+                    fragmentShader:
+                        earthFragmentShader
+
+                });
+
+        }
+
+        else if (data.texture) {
+
+            material =
+                new THREE.MeshStandardMaterial({
+
+                    map: data.texture,
+
+                    roughness: 0.85,
+
+                    metalness: 0
+
+                });
+
+        }
+
+        else {
+
+            material =
+                new THREE.MeshStandardMaterial({
+
+                    color: data.color,
+
+                    roughness: 0.85,
+
+                    metalness: 0
+
+                });
+        }
+
+
+        const geometry =
+            new THREE.SphereGeometry(
+                data.size,
+                64,
+                64
+            );
+
+
+        const planet =
+            new THREE.Mesh(
+                geometry,
+                material
+            );
+
+
+        // IMPORTANT:
+        // Planet's own axis is tilted.
+        // Orbit itself remains flat.
+
+        planet.rotation.z =
+            data.tilt;
+
+
+        orbitGroup.add(
+            planet
+        );
+
+
+        // SATURN RINGS
+
+        if (
+            data.name === "Saturn"
+        ) {
+
+            const ringGeometry =
+                new THREE.RingGeometry(
+                    4,
+                    6.5,
+                    128
+                );
+
+
+            const ringMaterial =
+                new THREE.MeshBasicMaterial({
+
+                    color: 0xd7c28d,
+
+                    side: THREE.DoubleSide,
+
+                    transparent: true,
+
+                    opacity: 0.88
+
+                });
+
+
+            const ring =
+                new THREE.Mesh(
+                    ringGeometry,
+                    ringMaterial
+                );
+
+
+            ring.rotation.x =
+                Math.PI / 2.4;
+
+
+            planet.add(
+                ring
+            );
+        }
+
+
+        planets.push({
+
+            name: data.name,
+
+            mesh: planet,
+
+            group: orbitGroup,
+
+            a: data.distance,
+
+            b:
+                data.distance *
+                Math.sqrt(
+                    1 -
+                    data.eccentricity *
+                    data.eccentricity
+                ),
+
+            e: data.eccentricity,
+
+            angle:
+                Math.random() *
+                Math.PI * 2,
+
+            orbitSpeed:
+                data.orbitSpeed,
+
+            rotationSpeed:
+                data.rotationSpeed,
+
+            size: data.size
+
+        });
+
+    }
+);
+
+
+// ============================================================
+// ONE CLEAN ORBIT FOR EACH PLANET
+// ============================================================
+
+planetData.forEach(
+    data => {
+
+        const points = [];
+
+        const segments = 300;
+
+        const a =
+            data.distance;
+
+        const e =
+            data.eccentricity;
+
+        const b =
+            a *
+            Math.sqrt(
+                1 - e * e
+            );
+
+
+        for (
+            let i = 0;
+            i <= segments;
+            i++
+        ) {
+
+            const angle =
+                (
+                    i /
+                    segments
+                ) *
+                Math.PI *
+                2;
+
+
+            const x =
+                a *
+                (
+                    Math.cos(angle) -
+                    e
+                );
+
+            const z =
+                b *
+                Math.sin(angle);
+
+
+            points.push(
+                new THREE.Vector3(
+                    x,
+                    0,
+                    z
+                )
+            );
+        }
+
+
+        const geometry =
+            new THREE.BufferGeometry()
+                .setFromPoints(
+                    points
+                );
+
+
+        const material =
+            new THREE.LineBasicMaterial({
+
+                color: 0x303030,
+
+                transparent: true,
+
+                opacity: 0.55
+
+            });
+
+
+        const orbit =
+            new THREE.LineLoop(
+                geometry,
+                material
+            );
+
+
+        // NO ROTATION HERE.
+        // All orbit lines are on the same clean plane.
+
+        scene.add(
+            orbit
+        );
+
+    }
+);
+
+
+// ============================================================
+// GET PLANET
+// ============================================================
+
+function getPlanetMesh(name) {
+
+    const planet =
+        planets.find(
+            p =>
+            p.name === name
+        );
+
+    return planet
+        ? planet.mesh
+        : null;
+}
+
+
+// ============================================================
+// IRREGULAR MOON
+// ============================================================
+
+function createIrregularMoon(
+    size,
+    scaleX,
+    scaleY,
+    scaleZ
+) {
+
+    const geometry =
+        new THREE.IcosahedronGeometry(
+            size,
+            2
+        );
+
+
+    const position =
+        geometry.attributes.position;
+
+
+    for (
+        let i = 0;
+        i < position.count;
+        i++
+    ) {
+
+        const x =
+            position.getX(i);
+
+        const y =
+            position.getY(i);
+
+        const z =
+            position.getZ(i);
+
+
+        const variation =
+            0.82 +
+            Math.random() *
+            0.32;
+
+
+        position.setXYZ(
+
+            i,
+
+            x *
+            scaleX *
+            variation,
+
+            y *
+            scaleY *
+            variation,
+
+            z *
+            scaleZ *
+            variation
+        );
+    }
+
+
+    position.needsUpdate =
+        true;
+
+    geometry.computeVertexNormals();
+
+    return geometry;
+}
+
+
+// ============================================================
+// MOONS
+// ============================================================
+
+const moons = [];
+
+
+// ============================================================
+// CREATE MOON
+// ============================================================
+
+function createMoon(
+    name,
+    planetMesh,
+    distance,
+    size,
+    color,
+    speed,
+    eccentricity = 0.03,
+    irregular = false,
+    scale = [1, 1, 1]
+) {
+
+    if (!planetMesh)
+        return;
+
+
+    // Separate moon system.
+    // It follows the planet but doesn't
+    // depend on planet's self rotation.
+
+    const moonSystem =
+        new THREE.Group();
+
+    planetMesh.add(
+        moonSystem
+    );
+
+
+    let geometry;
+
+
+    if (irregular) {
+
+        geometry =
+            createIrregularMoon(
+                size,
+                scale[0],
+                scale[1],
+                scale[2]
+            );
+
+    } else {
+
+        geometry =
+            new THREE.SphereGeometry(
+                size,
+                32,
+                32
+            );
+    }
+
+
+    const material =
+        new THREE.MeshStandardMaterial({
+
+            color: color,
+
+            roughness: 0.95,
+
+            metalness: 0
+
+        });
+
+
+    const moon =
+        new THREE.Mesh(
+            geometry,
+            material
+        );
+
+
+    moonSystem.add(
+        moon
+    );
+
+
+    moons.push({
+
+        name: name,
+
+        mesh: moon,
+
+        group: moonSystem,
+
+        a: distance,
+
+        b:
+            distance *
+            Math.sqrt(
+                1 -
+                eccentricity *
+                eccentricity
+            ),
+
+        e: eccentricity,
+
+        angle:
+            Math.random() *
+            Math.PI * 2,
+
+        speed: speed,
+
+        rotation:
+            0.006 +
+            Math.random() *
+            0.012
+
+    });
+
+}
+
+
+// ============================================================
+// EARTH MOON
+// ============================================================
+
+createMoon(
+    "Moon",
+    getPlanetMesh("Earth"),
+    4.0,
+    0.36,
+    0xbcbcbc,
+    0.025,
+    0.055,
+    false
+);
+
+
+// ============================================================
+// MARS MOONS
+// ============================================================
+
+createMoon(
+    "Phobos",
+    getPlanetMesh("Mars"),
+    2.2,
+    0.23,
+    0x777777,
+    0.038,
+    0.015,
+    true,
+    [1.6, 0.8, 1.0]
+);
+
+createMoon(
+    "Deimos",
+    getPlanetMesh("Mars"),
+    3.3,
+    0.17,
+    0x888888,
+    0.027,
+    0.015,
+    true,
+    [1.4, 0.9, 1.0]
+);
+
+
+// ============================================================
+// JUPITER MOONS
+// ============================================================
+
+createMoon(
+    "Io",
+    getPlanetMesh("Jupiter"),
+    5.2,
+    0.42,
+    0xd7c26a,
+    0.022,
+    0.004,
+    false
+);
+
+createMoon(
+    "Europa",
+    getPlanetMesh("Jupiter"),
+    6.8,
+    0.34,
+    0xd8d2c0,
+    0.018,
+    0.009,
+    false
+);
+
+createMoon(
+    "Ganymede",
+    getPlanetMesh("Jupiter"),
+    8.4,
+    0.55,
+    0x99927d,
+    0.014,
+    0.001,
+    false
+);
+
+createMoon(
+    "Callisto",
+    getPlanetMesh("Jupiter"),
+    10.0,
+    0.48,
+    0x77705e,
+    0.010,
+    0.007,
+    false
+);
+
+
+// Amalthea
+
+createMoon(
+    "Amalthea",
+    getPlanetMesh("Jupiter"),
+    11.7,
+    0.23,
+    0x9b5e42,
+    0.008,
+    0.003,
+    true,
+    [1.8, 0.7, 0.8]
+);
+
+
+// ============================================================
+// SATURN MOONS
+// ============================================================
+
+createMoon(
+    "Titan",
+    getPlanetMesh("Saturn"),
+    5.5,
+    0.55,
+    0xd2a95c,
+    0.018,
+    0.029,
+    false
+);
+
+createMoon(
+    "Enceladus",
+    getPlanetMesh("Saturn"),
+    7.2,
+    0.25,
+    0xd8d8d8,
+    0.015,
+    0.005,
+    false
+);
+
+
+// Hyperion
+
+createMoon(
+    "Hyperion",
+    getPlanetMesh("Saturn"),
+    9.2,
+    0.28,
+    0x856e58,
+    0.010,
+    0.10,
+    true,
+    [1.8, 1.0, 0.75]
+);
+
+
+// ============================================================
+// URANUS MOONS
+// ============================================================
+
+createMoon(
+    "Titania",
+    getPlanetMesh("Uranus"),
+    3.5,
+    0.32,
+    0x999999,
+    0.015,
+    0.002,
+    false
+);
+
+createMoon(
+    "Oberon",
+    getPlanetMesh("Uranus"),
+    4.7,
+    0.30,
+    0x777777,
+    0.012,
+    0.001,
+    false
+);
+
+
+// ============================================================
+// NEPTUNE MOON
+// ============================================================
+
+createMoon(
+    "Triton",
+    getPlanetMesh("Neptune"),
+    4.0,
+    0.42,
+    0xb7a69c,
+    0.014,
+    0.000,
+    false
+);
+
+
+// ============================================================
+// RAYCASTER
+// ============================================================
+
+const raycaster =
+    new THREE.Raycaster();
+
+const mouse =
+    new THREE.Vector2();
+
+const objectName =
+    document.getElementById(
+        "objectName"
+    );
+
+let hoveredObject = null;
+
+
+// ============================================================
+// MOUSE HOVER
+// ============================================================
+
+window.addEventListener(
+    "mousemove",
+    event => {
+
+        mouse.x =
+            (
+                event.clientX /
+                window.innerWidth
+            ) *
+            2 - 1;
+
+        mouse.y =
+            -(
+                event.clientY /
+                window.innerHeight
+            ) *
+            2 + 1;
+
+
+        raycaster.setFromCamera(
+            mouse,
+            camera
+        );
+
+
+        const objects = [];
+
+
+        planets.forEach(
+            p =>
+            objects.push(
+                p.mesh
+            )
+        );
+
+
+        moons.forEach(
+            m =>
+            objects.push(
+                m.mesh
+            )
+        );
+
+
+        const hits =
+            raycaster.intersectObjects(
+                objects,
+                false
+            );
+
+
+        if (
+            hits.length > 0
+        ) {
+
+            hoveredObject =
+                hits[0].object;
+
+
+            let name =
+                "Object";
+
+
+            const planet =
+                planets.find(
+                    p =>
+                    p.mesh ===
+                    hoveredObject
+                );
+
+
+            const moon =
+                moons.find(
+                    m =>
+                    m.mesh ===
+                    hoveredObject
+                );
+
+
+            if (planet) {
+
+                name =
+                    planet.name;
+
+            }
+
+            else if (moon) {
+
+                name =
+                    moon.name;
+            }
+
+
+            objectName.style.display =
+                "block";
+
+
+            objectName.style.left =
+                (
+                    event.clientX +
+                    12
+                ) + "px";
+
+
+            objectName.style.top =
+                (
+                    event.clientY +
+                    12
+                ) + "px";
+
+
+            objectName.textContent =
+                name;
+
+        }
+
+        else {
+
+            hoveredObject =
+                null;
+
+            objectName.style.display =
+                "none";
+        }
+
+    }
+);
+
+
+// ============================================================
+// SMART ZOOM
+// ============================================================
+
+renderer.domElement.addEventListener(
+    "wheel",
+    event => {
+
+        if (!hoveredObject)
+            return;
+
+
+        event.preventDefault();
+
+
+        const target =
+            hoveredObject.getWorldPosition(
+                new THREE.Vector3()
+            );
+
+
+        const direction =
+            new THREE.Vector3()
+                .subVectors(
+                    camera.position,
+                    target
+                )
+                .normalize();
+
+
+        const distance =
+            camera.position.distanceTo(
+                target
+            );
+
+
+        let newDistance;
+
+
+        if (
+            event.deltaY < 0
+        ) {
+
+            newDistance =
+                distance * 0.82;
+
+        }
+
+        else {
+
+            newDistance =
+                distance * 1.22;
+        }
+
+
+        newDistance =
+            THREE.MathUtils.clamp(
+                newDistance,
+                1.5,
+                350
+            );
+
+
+        const newPosition =
+            target.clone().add(
+                direction.multiplyScalar(
+                    newDistance
+                )
+            );
+
+
+        camera.position.lerp(
+            newPosition,
+            0.7
+        );
+
+
+        controls.target.lerp(
+            target,
+            0.7
+        );
+
+
+        controls.update();
+
+    },
+    {
+        passive: false
+    }
+);
+
+
+// ============================================================
+// PLANET ORBIT
+// ============================================================
+//
+// Planet's orbit:
+//      ☀️ ───────── 🪐
+//
+// Planet's own rotation:
+//                    🪐 ↻
+//
+// Ikkalasi endi bir-biriga aralashmaydi.
+//
+
+function updatePlanetOrbit(p) {
+
+    const e =
+        p.e;
+
+    const a =
+        p.a;
+
+    const b =
+        p.b;
+
+
+    const radius =
+        a *
+        (1 - e * e) /
+        (
+            1 +
+            e *
+            Math.cos(p.angle)
+        );
+
+
+    // Faster near Sun.
+    // Slower farther away.
+
+    const normalizedSpeed =
+        Math.pow(
+            a / radius,
+            2
+        );
+
+
+    p.angle +=
+        p.orbitSpeed *
+        normalizedSpeed;
+
+
+    const x =
+        a *
+        (
+            Math.cos(p.angle) -
+            e
+        );
+
+    const z =
+        b *
+        Math.sin(p.angle);
+
+
+    // ONLY orbit movement
+
+    p.group.position.x =
+        x;
+
+    p.group.position.z =
+        z;
+
+
+    // ONLY planet self rotation
+
+    p.mesh.rotation.y +=
+        p.rotationSpeed;
+}
+
+
+// ============================================================
+// MOON ORBIT
+// ============================================================
+
+function updateMoon(m) {
+
+    const e =
+        m.e;
+
+    const a =
+        m.a;
+
+    const b =
+        m.b;
+
+
+    const radius =
+        a *
+        (1 - e * e) /
+        (
+            1 +
+            e *
+            Math.cos(m.angle)
+        );
+
+
+    const speed =
+        m.speed *
+        Math.pow(
+            a / radius,
+            2
+        );
+
+
+    m.angle +=
+        speed;
+
+
+    const x =
+        a *
+        (
+            Math.cos(m.angle) -
+            e
+        );
+
+    const z =
+        b *
+        Math.sin(m.angle);
+
+
+    m.group.position.x =
+        x;
+
+    m.group.position.z =
+        z;
+
+
+    // Moon own rotation
+
+    m.mesh.rotation.y +=
+        m.rotation;
+}
+
+
+// ============================================================
+// ANIMATION
+// ============================================================
+
+function animate() {
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    // Sun self rotation
+
+    sun.rotation.y +=
+        0.0007;
+
+
+    // Sun glow
+
+    const pulse =
+        1 +
+        Math.sin(
+            Date.now() * 0.001
+        ) *
+        0.035;
+
+
+    glow.scale.set(
+        pulse,
+        pulse,
+        pulse
+    );
+
+
+    // PLANETS
+
+    planets.forEach(
+        updatePlanetOrbit
+    );
+
+
+    // MOONS
+
+    moons.forEach(
+        updateMoon
+    );
+
+
+    // STARS
+
+    stars.rotation.y +=
+        0.00001;
+
+
+    // Earth shader follows Sun
+
+    earthUniforms
+        .lightPosition
+        .value.copy(
+            sun.getWorldPosition(
+                new THREE.Vector3()
+            )
+        );
+
+
+    controls.update();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+
+animate();
+
+
+// ============================================================
+// WINDOW RESIZE
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+
+        camera.updateProjectionMatrix();
+
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
